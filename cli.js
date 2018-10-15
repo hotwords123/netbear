@@ -33,7 +33,14 @@ try {
 
 logger.log(`Connecting to ${hostname}:${port}...`);
 
-let client = net.connect(port, hostname === '*' ? '' : hostname);
+let client;
+
+try {
+    client = net.connect(port, hostname === '*' ? '' : hostname);
+} catch (err) {
+    logger.error(err.stack);
+    process.exit(0);
+}
 
 let sentStream = fs.createWriteStream(Path.join(__dirname, 'sent.txt'), {
     encoding: "utf-8"
@@ -65,6 +72,12 @@ process.stdin.on('data', (chunk) => {
     client.write(chunk);
     sentStream.write(chunk);
     //logger.log('Sent: ' + chunk.toString().trimRight());
+});
+
+process.on('uncaughtException', (err) => {
+    logger.error("Uncaught exception!");
+    logger.error(err.stack);
+    process.exit(0);
 });
 
 function saveExit(code) {
